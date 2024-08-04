@@ -1,3 +1,9 @@
+Parameters:
+  vpcID:
+    Description: The ID of your VPC (leave blank if using the default VPC).
+    Type: String
+    AllowedPattern: vpc-[a-z0-9]{8}
+    ConstraintDescription: Malformed input parameter - vpcID must match pattern vpc-[a-z0-9]{8}
 Resources:
   kubernetesControlPlane:
     Type: AWS::EC2::Instance
@@ -40,9 +46,9 @@ Resources:
           # # System level configuration prereqs # #
           hostnamectl set-hostname k8s-control
           ipvar=$(hostname -I)
-          echo $ipvar k8s-control | tee /etc/hosts ~/newHosts
-          echo "${kubernetesWorker1.PrivateIp} k8s-worker1" | tee /etc/hosts ~/newHosts
-          echo "${kubernetesWorker2.PrivateIp} k8s-worker2" | tee /etc/hosts ~/newHosts
+          echo $ipvar k8s-control | tee -a /etc/hosts ~/newHosts
+          echo "${kubernetesWorker1.PrivateIp} k8s-worker1" | tee -a /etc/hosts ~/newHosts
+          echo "${kubernetesWorker2.PrivateIp} k8s-worker2" | tee -a /etc/hosts ~/newHosts
           touch /etc/modules-load.d/k8s.conf
           echo overlay >> /etc/modules-load.d/k8s.conf
           echo br_netfilter >> /etc/modules-load.d/k8s.conf
@@ -217,6 +223,7 @@ Resources:
     Properties:
       GroupDescription: Security group for
       GroupName: kubernetesControlPlaneSecurityGroup
+      VpcId: !Ref vpcID
       SecurityGroupEgress: 
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -230,6 +237,7 @@ Resources:
     Properties:
       GroupDescription: Security group for
       GroupName: kubernetesWorkersSecurityGroup
+      VpcId: !Ref vpcID
       SecurityGroupEgress: 
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
